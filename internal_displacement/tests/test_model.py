@@ -1,11 +1,12 @@
+import os
+from datetime import datetime
 from unittest import TestCase
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from internal_displacement.model.model import Status, Session, Category, Article
+from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm
 
-engine = create_engine(
-    'postgresql://aneel:xxx@internal-displacement.cf1y5y4ffeey.us-west-2.rds.amazonaws.com/internal_displacement')
+engine = create_engine(os.environ.get('DB_URL'))
 Session.configure(bind=engine)
 
 class TestModel(TestCase):
@@ -31,5 +32,15 @@ class TestModel(TestCase):
         article = Article(url='http://example.com',
                           domain='example.com',
                           status=new)
+        content = Content(article=article,
+                          retrieval_date=datetime.now(),
+                          content="La la la")
+        disaster = Category.lookup(self.session, 'disaster')
+        article.categories = [disaster]
         self.session.add(article)
-        self.session.commit()
+
+    def test_country_term(self):
+        mm = Country(code="mm")
+        myanmar = CountryTerm(term="Myanmar", country=mm)
+        burma = CountryTerm(term="Burma", country=mm)
+        self.session.add(mm)
